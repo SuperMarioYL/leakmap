@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "name": "leakmap",
+  "github": "https://github.com/SuperMarioYL/leakmap",
+  "host": "leakmap.lei6393.com",
+  "lang": { "primary": "zh", "toggle": true },
+  "accent": ["#e6a144"],
+  "hero": {
+    "eyebrow": { "zh": "并行 Agent · 跨 worktree · 本地运行", "en": "Parallel Agents · Cross-worktree · Runs Locally" },
+    "headline": { "zh": "谁把谁的密钥\n带进了谁的提交", "en": "Whose secret bled\ninto whose commit" },
+    "sub": { "zh": "并行跑多个 coding agent 时，一个 agent 的 .env 会静默渗进另一个的 commit——LeakMap 实时抓到并归因到来源 agent。", "en": "When you run parallel coding agents, one agent's .env silently bleeds into another's commit. LeakMap catches it live and attributes the source." },
+    "command": "leakmap watch",
+    "cta": { "zh": "一条命令开监听", "en": "Start watching in one command" },
+    "ctaGithub": { "zh": "查看 GitHub", "en": "View on GitHub" },
+    "scroll": { "zh": "看它怎么抓", "en": "See how it catches" }
+  },
+  "advantages": [
+    {
+      "title": { "zh": "写入即抓", "en": "Caught the moment it bleeds" },
+      "body": { "zh": "实时监听每个 worktree 的写入；Agent B 一写下 Agent A 的密钥值，立刻发出归因事件——不用等事后扫描。", "en": "Watches every worktree's writes in real time; the instant Agent B writes Agent A's secret value, an attributed event fires — no after-the-fact scan." },
+      "chips": ["› 写入即匹配", "› 无需事后扫描"]
+    },
+    {
+      "title": { "zh": "归因到来源 agent", "en": "Attributed to the source agent" },
+      "body": { "zh": "不止告诉你「发现了密钥」，而是「Agent A 的 DB_TOKEN 出现在了 Agent B 的提交里」——来源 worktree、目标 worktree、agent 进程，全部留痕。", "en": "Not just 'a secret was found' — 'Agent A's DB_TOKEN appeared in Agent B's commit.' Source worktree, target worktree, agent process — all on the record." },
+      "chips": ["› 来源 → 目标", "› 带进程归因"]
+    },
+    {
+      "title": { "zh": "一张图看清所有渗漏", "en": "One map of every bleed" },
+      "body": { "zh": "所有 worktree 当节点、渗漏当边，渲染成 leak-map——终端、本地网页、Markdown 报告任选，外加一条 JSONL 审计流。", "en": "Every worktree a node, every bleed an edge — rendered as a leak-map in terminal, local web page, or Markdown, plus a JSONL audit stream." },
+      "chips": ["› TUI / HTML / Markdown", "› JSONL 审计流"]
+    },
+    {
+      "title": { "zh": "本地运行，密钥不出机器", "en": "Runs locally, secrets never leave" },
+      "body": { "zh": "一条命令装好，全在本机跑；不上云、不要 API key、不外发任何数据。", "en": "One command to install, runs entirely on your machine — no cloud, no API key, nothing sent out." },
+      "chips": ["› 无需账号", "› 不外发数据"]
+    }
+  ],
+  "scene": { "kind": "mesh" },
+  "cta": {
+    "headline": { "zh": "并行 agent 越跑越多，先看清谁在渗漏谁", "en": "More parallel agents, more bleeds — see who leaks into whom first" },
+    "sub": { "zh": "git worktree add 完，跑一条 leakmap watch", "en": "After git worktree add, run leakmap watch" },
+    "button": { "zh": "go install", "en": "go install" }
+  },
+  "footer": { "tag": { "zh": "MIT · 本地运行 · 一条命令装好", "en": "MIT · Runs locally · One command" } }
+}
