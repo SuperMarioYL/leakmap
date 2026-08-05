@@ -1,0 +1,30 @@
+# binaries
+/leakmap
+/bin/
+/dist/
+
+# build scratch and pipeline control files
+.build_metadata*
+.builder_*
+.build_*
+.spawn.*
+.stage_*
+BUILD_SETUP_NEXT_STEPS.md
+PUBLISH_BLOCKED.md
+GIT_AUTHOR_DRIFT.md
+DRIFT_REPORT.md
+
+# editor / agent scratch
+.claude/
+CLAUDE.md
+.vscode/
+.idea/
+.DS_Store
+
+# test / coverage
+*.out
+coverage.txt
+
+# leak event log (runtime output)
+leakmap.jsonl
+*.jsonl

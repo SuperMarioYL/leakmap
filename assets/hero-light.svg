@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 200" width="880" height="200" role="img" aria-label="LeakMap">
+  <defs>
+    <linearGradient id="lmBgL" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1f5f9"/>
+      <stop offset="1" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="lmTitleL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="0.5" stop-color="#0284c7">
+        <animate attributeName="offset" values="0.15;0.85;0.15" dur="5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="0.5" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="lmEdgeL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#f43f5e"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="880" height="200" rx="18" fill="url(#lmBgL)"/>
+
+  <!-- leak edge motif: node A -> node B with marching dash -->
+  <g opacity="0.95">
+    <circle cx="150" cy="120" r="13" fill="#0ea5e9"/>
+    <text x="150" y="150" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" fill="#475569" text-anchor="middle">wt-A</text>
+    <circle cx="730" cy="120" r="13" fill="#f43f5e"/>
+    <text x="730" y="150" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" fill="#475569" text-anchor="middle">wt-B</text>
+    <line x1="165" y1="120" x2="715" y2="120" stroke="url(#lmEdgeL)" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 8">
+      <animate attributeName="stroke-dashoffset" from="0" to="-36" dur="1.4s" repeatCount="indefinite"/>
+    </line>
+    <circle r="4" fill="#f43f5e">
+      <animateMotion dur="1.6s" repeatCount="indefinite" path="M165,120 L715,120"/>
+    </circle>
+  </g>
+
+  <!-- title -->
+  <text x="60" y="78" font-family="ui-sans-serif,system-ui,sans-serif" font-size="52" font-weight="800" fill="url(#lmTitleL)">LeakMap</text>
+
+  <!-- tagline fade-in (one-shot, decorative) -->
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" dur="1.4s" begin="0.3s" fill="freeze"/>
+    <text x="62" y="106" font-family="ui-sans-serif,system-ui,sans-serif" font-size="16" fill="#475569">cross-worktree leak provenance + leak-map for parallel coding agents</text>
+  </g>
+</svg>

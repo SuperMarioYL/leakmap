@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 360" width="880" height="360" role="img" aria-label="LeakMap architecture">
+  <defs>
+    <marker id="arrowD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <marker id="redArrowD" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#fb7185"/>
+    </marker>
+  </defs>
+
+  <rect width="880" height="360" rx="16" fill="#0b1220"/>
+
+  <g fill="none" stroke="#64748b" stroke-width="2">
+    <line x1="200" y1="70" x2="200" y2="116" stroke-dasharray="7 6" marker-end="url(#arrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="680" y1="70" x2="680" y2="116" stroke-dasharray="7 6" marker-end="url(#arrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.1s" repeatCount="indefinite" begin="-0.5s"/>
+    </line>
+    <path d="M300,140 L350,216" stroke-dasharray="7 6" marker-end="url(#arrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M580,140 L530,216" stroke-dasharray="7 6" marker-end="url(#arrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.2s" repeatCount="indefinite" begin="-0.6s"/>
+    </path>
+    <line x1="170" y1="235" x2="346" y2="235" stroke-dasharray="7 6" marker-end="url(#arrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.3s" repeatCount="indefinite" begin="-0.3s"/>
+    </line>
+    <line x1="440" y1="255" x2="440" y2="316" stroke="#fb7185" stroke-dasharray="7 6" marker-end="url(#redArrowD)">
+      <animate attributeName="stroke-dashoffset" from="0" to="-26" dur="1.0s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <g fill="#38bdf8">
+    <circle r="3.5"><animateMotion dur="1.1s" repeatCount="indefinite" path="M200,70 L200,116"/></circle>
+    <circle r="3.5"><animateMotion dur="1.1s" repeatCount="indefinite" begin="-0.5s" path="M680,70 L680,116"/></circle>
+    <circle r="3.5"><animateMotion dur="1.2s" repeatCount="indefinite" path="M300,140 L350,216"/></circle>
+    <circle r="3.5"><animateMotion dur="1.2s" repeatCount="indefinite" begin="-0.6s" path="M580,140 L530,216"/></circle>
+    <circle r="3.5" fill="#818cf8"><animateMotion dur="1.3s" repeatCount="indefinite" path="M170,235 L346,235"/></circle>
+    <circle r="3.5" fill="#fb7185"><animateMotion dur="1.0s" repeatCount="indefinite" path="M440,255 L440,316"/></circle>
+  </g>
+
+  <g font-family="ui-sans-serif,system-ui,sans-serif" font-size="13" text-rendering="geometricPrecision">
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-0.2s"/>
+      <rect x="100" y="30" width="200" height="40" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="200" y="55" text-anchor="middle" fill="#e2e8f0">Agent A @ worktree-A</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-0.8s"/>
+      <rect x="580" y="30" width="200" height="40" rx="8" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="680" y="55" text-anchor="middle" fill="#e2e8f0">Agent B @ worktree-B</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-1.4s"/>
+      <rect x="100" y="120" width="200" height="40" rx="8" fill="#0b2340" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="200" y="145" text-anchor="middle" fill="#e2e8f0">fsnotify(wt-A)</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-2.0s"/>
+      <rect x="580" y="120" width="200" height="40" rx="8" fill="#0b2340" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="680" y="145" text-anchor="middle" fill="#e2e8f0">fsnotify(wt-B)</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-0.5s"/>
+      <rect x="20" y="215" width="150" height="40" rx="8" fill="#1e1b4b" stroke="#a855f7" stroke-width="1.5"/>
+      <text x="95" y="240" text-anchor="middle" fill="#e2e8f0">secret fingerprints</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-1.1s"/>
+      <rect x="350" y="215" width="180" height="40" rx="8" fill="#020617" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="440" y="240" text-anchor="middle" fill="#e2e8f0">leak.Detect</text>
+    </g>
+    <g>
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite" begin="-1.7s"/>
+      <rect x="300" y="316" width="280" height="36" rx="8" fill="#2a0a14" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="440" y="339" text-anchor="middle" fill="#e2e8f0">render: TUI / HTML / report</text>
+    </g>
+  </g>
+
+  <text x="455" y="295" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" fill="#fb7185">LeakEvent stream (jsonl)</text>
+</svg>
