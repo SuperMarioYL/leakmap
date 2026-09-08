@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "source_revision": "1765a52eb0dc53d5bbc2ca89154a77011cef5bbc",
+  "scope": "Offline production fingerprint and cross-worktree matcher using one fake token in a temporary directory; no real worktree or agent is monitored.",
+  "steps": [
+    {
+      "label": "Recorded run",
+      "body": "Offline production fingerprint and cross-worktree matcher using one fake token in a temporary directory; no real worktree or agent is monitored.",
+      "command": "go run ./examples/presentation",
+      "output": "fingerprints: 1\nworktree-a -> worktree-b: field=DB_TOKEN match=exact severity=secret\nsame-worktree matches: 0"
+    }
+  ]
+}

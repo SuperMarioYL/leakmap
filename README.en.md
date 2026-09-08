@@ -1,153 +1,126 @@
-<div align="right">
-  <b>English</b> | <a href="./README.md">简体中文</a>
-</div>
+[简体中文](./README.md) · [Website](https://leakmap.lei6393.com) · [GitHub](https://github.com/SuperMarioYL/leakmap)
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.svg">
-  <img src="assets/hero-light.svg" alt="LeakMap — cross-worktree leak provenance" width="880">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/presentation/hero-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="./assets/presentation/hero-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/presentation/hero-dark.svg">
+  <img src="./assets/presentation/hero-light.svg" width="960" alt="Hero diagram">
 </picture>
 
-<p align="center"><sub>The leak-map that attributes secret and file bleeds between parallel coding agents running in git worktrees of one repository.</sub></p>
+# LeakMap
 
-<p align="center">
-  <b>For the first time, cross-worktree secret bleeds between parallel agents get a real-time, attributable leak-map.</b>
-</p>
+**Spot secret values crossing worktree boundaries.**
 
-<p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/github/license/SuperMarioYL/leakmap?color=blue" alt="license"></a>
-  <a href="https://github.com/SuperMarioYL/leakmap/releases"><img src="https://img.shields.io/github/v/release/SuperMarioYL/leakmap?label=release" alt="release"></a>
-  <a href="https://github.com/SuperMarioYL/leakmap/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/SuperMarioYL/leakmap/ci.yml?label=ci" alt="ci"></a>
-  <img src="https://img.shields.io/badge/Go-1.24-00ADD8?logo=go&logoColor=white" alt="go">
-  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-6366f1" alt="platform">
-</p>
+LeakMap indexes configured secret-bearing file patterns across Git worktrees and reports when a watched file contains a value from another worktree.
 
----
+## Why use it
 
-## <img src="https://api.iconify.design/tabler:topology-star-3.svg?color=%230071E3&width=24" width="24" align="top"> Architecture
+Parallel worktrees share a host filesystem. A source-to-target content match gives you a concrete file pair to inspect when material unexpectedly appears in another workspace.
+
+- **Keep file provenance** — Events carry source and target paths.
+- **Inspect locally** — JSONL feeds terminal, HTML and Markdown views.
+- **Avoid raw event values** — Serialized events carry fields and match categories.
+
+## Architecture
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/atlas-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/atlas-light.svg">
-  <img src="assets/atlas-light.svg" alt="LeakMap architecture" width="880">
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/presentation/architecture-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="./assets/presentation/architecture-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/presentation/architecture-dark.svg">
+  <img src="./assets/presentation/architecture-light.svg" width="960" alt="Architecture diagram">
 </picture>
 
-One binary, one process, in-memory state. LeakMap discovers every git worktree of a repository, fingerprints each worktree's secret surface (`.env`, `*.key`, credentials), and opens an fsnotify write watch over all worktree roots. The moment a write into worktree B contains a value fingerprinted in worktree A, it emits an attributed **LeakEvent** — "Agent A's `.env` `DB_TOKEN` appears in Agent B's commit to worktree B" — written to `leakmap.jsonl` and rendered as a leak-map (TUI / local HTML / Markdown).
+worktree discovery enumerates roots, secret scans file patterns and builds an in-memory raw-value index, and fsnotify events feed file contents to the exact/fuzzy matcher. Events retain source and target paths without serializing raw values; renderers read JSONL into local reports.
 
-## <img src="https://api.iconify.design/tabler:bulb.svg?color=%230071E3&width=24" width="24" align="top"> Why this exists
+| Component | Responsibility |
+| --- | --- |
+| `Worktree discovery` | internal/worktree |
+| `Secret index` | internal/secret |
+| `Write matcher` | internal/leak/detect.go |
+| `JSONL events` | internal/leak/event.go |
+| `Local reports` | internal/render |
 
-A git worktree is a git construct, not an isolation boundary: parallel coding agents running in several worktrees share the host's filesystem, environment variables, network egress, and build cache. A secret read by Agent A, a file written by Agent B, a token used by Agent C can all silently bleed into another worktree's run — with no audit trail.
+## Install and quickstart
 
-[fletch.sh's "Git worktrees are not an isolation boundary for coding agents"](https://fletch.sh/blog/git-worktrees-vs-clones-for-ai-agents/) lays out the structural problem: today Claude Code / Cursor / Codex (and China's Trae, 通义灵码) all encourage running N parallel agent sessions across worktrees, yet cross-worktree secret bleeds are invisible and unattributed. LeakMap upgrades secret-scanning from "statically scan files" to "real-time cross-worktree attribution" — so you can finally answer "did Agent A's `.env` leak into Agent D's commit?"
-
-<details>
-<summary>How it differs from gitleaks / trufflehog</summary>
-
-| Axis | gitleaks / trufflehog | LeakMap |
-|---|---|---|
-| Scope | static secret scan of one repo's files | real-time cross-worktree leak attribution |
-| Timing | snapshot scan | match on write (fsnotify) |
-| Attribution | none | source → target worktree + agent PID |
-| Output | secret inventory | leak-map (nodes + leak edges) + JSONL audit stream |
-
-gitleaks answers "is there a secret in this file"; LeakMap answers "who carried whose secret into whose commit" — the same secret-scan primitive, re-scoped to the inter-agent boundary.
-</details>
-
-## <img src="https://api.iconify.design/tabler:rocket.svg?color=%230071E3&width=24" width="24" align="top"> Install & Quickstart
+Use the runtime version declared in the repository manifest. The source installation below makes the included example reproducible.
 
 ```bash
-go install github.com/SuperMarioYL/leakmap@latest      # single binary, <30s
-cd repo && git worktree add ../wt-b branch-b           # you already run 2+ worktrees
-leakmap watch                                          # auto-discover, fingerprint, watch
+git clone https://github.com/SuperMarioYL/leakmap.git
+cd leakmap
+go build ./cmd/leakmap
 ```
 
-The first leak event fires when Agent B writes Agent A's `.env` value into wt-b, landing in `leakmap.jsonl`. Cold start to first attribution is under 2 minutes.
-
-<details>
-<summary>Sample output (leakmap scan)</summary>
-
-```
-== ./lm
-   agent pid: 60283
-   2 secret surface entr(y|ies)
-   DB_TOKEN               secret     31941df1f1b913cb  super-…7890
-   API_KEY                secret     ef3531b166010dcf  ak_liv…stuv
-
-== ../lm-wt-b
-   0 secret surface entr(y|ies)
-   (none)
-
-2 worktree(s), 2 fingerprint(s)
-```
-</details>
-
-## <img src="https://api.iconify.design/tabler:terminal-2.svg?color=%230071E3&width=24" width="24" align="top"> Usage
+Run the Go example against one complete fake .env value, then compare cross-worktree and same-worktree matching.
 
 ```bash
-# 1) fingerprint each worktree's secret surface, print per-worktree inventory (m1)
-leakmap scan --repo .
-
-# 2) watch cross-worktree writes, match other worktrees' fingerprints -> LeakEvent JSONL (m2)
-leakmap watch --repo .
-
-# 3) render the accumulated leak-map as a terminal TUI (nodes + leak edges)
-leakmap map --repo .
-
-# 4) render a self-contained local HTML page
-leakmap map --repo . --html leakmap.html
-
-# 5) export a Markdown leak summary (ranked by secret severity)
-leakmap report --repo . -m REPORT.md
+go run ./examples/presentation
 ```
 
-Subcommands and flags:
+## Recorded demo
 
-| Command | What it does |
-|---|---|
-| `scan [--json]` | discover worktrees, fingerprint secret files, classify (regex-first; domestic-model classification is an optional seam) |
-| `watch [--jsonl PATH]` | open fsnotify cross-worktree watch, emit LeakEvent on match |
-| `map [--html PATH]` | read `leakmap.jsonl`, render the leak-map (TUI or HTML) |
-| `report [-m PATH] [--html PATH]` | export a Markdown (optionally HTML) summary |
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/presentation/process-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="./assets/presentation/process-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/presentation/process-dark.svg">
+  <img src="./assets/presentation/process-light.svg" width="960" alt="Process diagram">
+</picture>
 
-Global flags: `--repo` (repo root, default `.`), `--jsonl` (audit trail path, default `leakmap.jsonl`), `-v` verbose. A full example lives at [`examples/quickstart.sh`](./examples/quickstart.sh).
+One DB_TOKEN exact match crosses worktree-a to worktree-b; the same-worktree check yields zero events.
 
-## <img src="https://api.iconify.design/tabler:photo.svg?color=%230071E3&width=24" width="24" align="top"> Demo
-
-![demo](assets/demo.gif)
-
-> Recorded from [`docs/demo.tape`](./docs/demo.tape) with [vhs](https://github.com/charmbracelet/vhs). CI re-renders the gif on demand in `.github/workflows/demo.yml`.
-
-## <img src="https://api.iconify.design/tabler:building.svg?color=%230071E3&width=24" width="24" align="top"> Pricing / Commercial
-
-v0.1 is a free OSS CLI — the attribution detector is free forever and runs locally. Willingness to pay emerges on top of it, in the retention and reporting layer, once DevOps / compliance writes "did an agent leak a secret across worktrees" into a checklist:
-
-| Tier | What's included | Price |
-|---|---|---|
-| Free (v0.1) | local leak-map CLI + JSONL audit trail | free |
-| Team (mid-term) | encrypted `leakmap.jsonl` retention (N days) + team compliance report export (SOC2-style, reusing GLM-4) + SSO | ¥99–299 / seat / month |
-| Enterprise | multi-team dashboard, retention policy, SOC2 reporting | quote on request |
-
-Benchmarked against GitGuardian internal monitoring (~$25/seat). LeakMap's detector stays free; the paid tier covers only retention and compliance reporting. No hosted SaaS of the detector — the inner circle wants local/self-hosted. Demand gate: complete 5 parallel-agent dev-team-lead interviews before LOC > 2k; if fewer than 2 confirm willingness to pay for retention/report, defer monetization.
-
-## <img src="https://api.iconify.design/tabler:route.svg?color=%230071E3&width=24" width="24" align="top"> Roadmap
-
-- [x] **m1** per-worktree secret fingerprinting + classification (`leakmap scan`)
-- [x] **m2** fsnotify cross-worktree write matching → LeakEvent JSONL (`leakmap watch`)
-- [ ] **m3** leak-map TUI + local HTML + GLM-4 summary prose (basic TUI/HTML/Markdown shipped; model prose pending)
-- [ ] **v0.2** network egress leak detection (eBPF) + real-time env-var read interception (ptrace/eBPF)
-- [ ] **mid-term** audit-log retention + team compliance report + SSO (enterprise tier)
-- [ ] **future** IDE plugin / editor integration, Windows support
-
-## <img src="https://api.iconify.design/tabler:share.svg?color=%230071E3&width=24" width="24" align="top"> Share
-
-```
-LeakMap — real-time leak-map that attributes which parallel agent's secret bled into which worktree's commit. github.com/SuperMarioYL/leakmap
+```text
+fingerprints: 1
+worktree-a -> worktree-b: field=DB_TOKEN match=exact severity=secret
+same-worktree matches: 0
 ```
 
-> After pushing, set repo topics: `gh repo edit --add-topic security --add-topic secret-scanning --add-topic coding-agent --add-topic worktree`
+The complete command and output are recorded in [docs/demo-results.json](./docs/demo-results.json). Inputs and reproduction code are included in the repository.
 
-## <img src="https://api.iconify.design/tabler:scale.svg?color=%230071E3&width=24" width="24" align="top"> License & Contributing
+![Existing terminal recording](./assets/demo.gif)
 
-[MIT](./LICENSE) © 2026 SuperMarioYL. File bugs or PRs in [Issues](https://github.com/SuperMarioYL/leakmap/issues); design partners, please open an issue tagged `design-partner`.
+The existing recording is retained for context; the text example above documents the reproducible scenario.
 
-<p align="center"><sub><a href="./LICENSE">MIT</a> © 2026 SuperMarioYL</sub></p>
+## Usage
+
+Run these commands from the repository root after installation. Replace paths for your own data.
+
+```bash
+go run ./cmd/leakmap scan --repo . --json
+go run ./cmd/leakmap watch --repo . --jsonl leakmap.jsonl
+go run ./cmd/leakmap map --repo . --html leakmap.html
+go run ./cmd/leakmap report --repo . -m REPORT.md
+```
+
+## Configuration
+
+--repo chooses the Git repository, --jsonl the event file, and --verbose diagnostic output. Scan patterns include .env variants, key/PEM and credential files, while build and dependency directories are pruned. Values shorter than eight bytes are not cross-matched. Human scan output masks values; event reports still contain potentially sensitive file paths.
+
+## Integrations and responsibilities
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/presentation/integrations-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="./assets/presentation/integrations-mobile-light.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/presentation/integrations-dark.svg">
+  <img src="./assets/presentation/integrations-light.svg" width="960" alt="Integrations diagram">
+</picture>
+
+Choose the input and output route that matches your workflow. The local example below exercises the stated subset.
+
+| Route | Implemented role |
+| --- | --- |
+| Git worktrees | Source and target roots |
+| .env / key files | Pattern-based fingerprinting |
+| fsnotify | Watched file writes |
+| JSONL | Path and match evidence |
+| TUI / HTML / Markdown | Local inspection exports |
+
+## Limits and next steps
+
+- A content match is not proof of which process copied it, which agent caused it or whether it was committed. PID attribution is best-effort and can be unknown.
+- The index and recursive watch are established at startup; newly created subdirectories and later secret changes may not be covered. This is detection, not an isolation or blocking boundary.
+- The demo exercises scanning and matching only. It uses a fake token; no actual user secret, live watcher, network-egress or environment-read interception is tested.
+
+Network/environment interception, model-written summaries, wider filesystem coverage and hosted retention are future directions. No team service is delivered by this repository.
+
+## License and contributions
+
+See [LICENSE](./LICENSE). When reporting an issue, include a minimal input, the command, and the observed output.

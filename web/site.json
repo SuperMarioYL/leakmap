@@ -1,46 +1,215 @@
 {
-  "schema": 1,
-  "name": "leakmap",
+  "schema": 3,
+  "name": "LeakMap",
   "github": "https://github.com/SuperMarioYL/leakmap",
   "host": "leakmap.lei6393.com",
-  "lang": { "primary": "zh", "toggle": true },
-  "accent": ["#e6a144"],
+  "palette": "auto",
+  "lang": {
+    "primary": "en",
+    "toggle": true
+  },
+  "meta": {
+    "visual_style": "neon-particle",
+    "demo_source": "docs/demo-results.json"
+  },
   "hero": {
-    "eyebrow": { "zh": "并行 Agent · 跨 worktree · 本地运行", "en": "Parallel Agents · Cross-worktree · Runs Locally" },
-    "headline": { "zh": "谁把谁的密钥\n带进了谁的提交", "en": "Whose secret bled\ninto whose commit" },
-    "sub": { "zh": "并行跑多个 coding agent 时，一个 agent 的 .env 会静默渗进另一个的 commit——LeakMap 实时抓到并归因到来源 agent。", "en": "When you run parallel coding agents, one agent's .env silently bleeds into another's commit. LeakMap catches it live and attributes the source." },
-    "command": "leakmap watch",
-    "cta": { "zh": "一条命令开监听", "en": "Start watching in one command" },
-    "ctaGithub": { "zh": "查看 GitHub", "en": "View on GitHub" },
-    "scroll": { "zh": "看它怎么抓", "en": "See how it catches" }
+    "headline": {
+      "en": "Spot secret values crossing worktree boundaries.",
+      "zh": "发现跨工作树出现的密钥值。"
+    },
+    "sub": {
+      "en": "LeakMap indexes configured secret-bearing file patterns across Git worktrees and reports when a watched file contains a value from another worktree.",
+      "zh": "LeakMap 在 Git 工作树中索引符合规则的密钥文件，在受监控文件出现其他工作树的值时输出事件。"
+    },
+    "href": "#quickstart"
   },
   "advantages": [
     {
-      "title": { "zh": "写入即抓", "en": "Caught the moment it bleeds" },
-      "body": { "zh": "实时监听每个 worktree 的写入；Agent B 一写下 Agent A 的密钥值，立刻发出归因事件——不用等事后扫描。", "en": "Watches every worktree's writes in real time; the instant Agent B writes Agent A's secret value, an attributed event fires — no after-the-fact scan." },
-      "chips": ["› 写入即匹配", "› 无需事后扫描"]
+      "title": {
+        "en": "Keep file provenance",
+        "zh": "保留文件来源"
+      },
+      "body": {
+        "en": "Events carry source and target paths.",
+        "zh": "事件包含源与目标路径。"
+      }
     },
     {
-      "title": { "zh": "归因到来源 agent", "en": "Attributed to the source agent" },
-      "body": { "zh": "不止告诉你「发现了密钥」，而是「Agent A 的 DB_TOKEN 出现在了 Agent B 的提交里」——来源 worktree、目标 worktree、agent 进程，全部留痕。", "en": "Not just 'a secret was found' — 'Agent A's DB_TOKEN appeared in Agent B's commit.' Source worktree, target worktree, agent process — all on the record." },
-      "chips": ["› 来源 → 目标", "› 带进程归因"]
+      "title": {
+        "en": "Inspect locally",
+        "zh": "本地检查"
+      },
+      "body": {
+        "en": "JSONL feeds terminal, HTML and Markdown views.",
+        "zh": "JSONL 可生成终端、HTML 与 Markdown 视图。"
+      }
     },
     {
-      "title": { "zh": "一张图看清所有渗漏", "en": "One map of every bleed" },
-      "body": { "zh": "所有 worktree 当节点、渗漏当边，渲染成 leak-map——终端、本地网页、Markdown 报告任选，外加一条 JSONL 审计流。", "en": "Every worktree a node, every bleed an edge — rendered as a leak-map in terminal, local web page, or Markdown, plus a JSONL audit stream." },
-      "chips": ["› TUI / HTML / Markdown", "› JSONL 审计流"]
-    },
-    {
-      "title": { "zh": "本地运行，密钥不出机器", "en": "Runs locally, secrets never leave" },
-      "body": { "zh": "一条命令装好，全在本机跑；不上云、不要 API key、不外发任何数据。", "en": "One command to install, runs entirely on your machine — no cloud, no API key, nothing sent out." },
-      "chips": ["› 无需账号", "› 不外发数据"]
+      "title": {
+        "en": "Avoid raw event values",
+        "zh": "事件省略原值"
+      },
+      "body": {
+        "en": "Serialized events carry fields and match categories.",
+        "zh": "序列化事件记录字段与匹配类别。"
+      }
     }
   ],
-  "scene": { "kind": "mesh" },
-  "cta": {
-    "headline": { "zh": "并行 agent 越跑越多，先看清谁在渗漏谁", "en": "More parallel agents, more bleeds — see who leaks into whom first" },
-    "sub": { "zh": "git worktree add 完，跑一条 leakmap watch", "en": "After git worktree add, run leakmap watch" },
-    "button": { "zh": "go install", "en": "go install" }
+  "demo": {
+    "title": {
+      "en": "Run it on a complete example",
+      "zh": "运行完整示例"
+    },
+    "note": {
+      "en": "Run the Go example against one complete fake .env value, then compare cross-worktree and same-worktree matching.",
+      "zh": "Go 示例对一个完整虚构 .env 值运行，并比较跨工作树与同工作树匹配。"
+    },
+    "source": "https://github.com/SuperMarioYL/leakmap/blob/main/docs/demo-results.json",
+    "steps": [
+      {
+        "label": "Recorded run",
+        "body": "Offline production fingerprint and cross-worktree matcher using one fake token in a temporary directory; no real worktree or agent is monitored.",
+        "command": "go run ./examples/presentation",
+        "output": "fingerprints: 1\nworktree-a -> worktree-b: field=DB_TOKEN match=exact severity=secret\nsame-worktree matches: 0",
+        "image": "/assets/presentation/demo-0-light.svg",
+        "imageDark": "/assets/presentation/demo-0-dark.svg"
+      }
+    ]
   },
-  "footer": { "tag": { "zh": "MIT · 本地运行 · 一条命令装好", "en": "MIT · Runs locally · One command" } }
+  "quickstart": {
+    "title": {
+      "en": "Try it locally",
+      "zh": "本地上手"
+    },
+    "body": {
+      "en": "Run the Go example against one complete fake .env value, then compare cross-worktree and same-worktree matching.",
+      "zh": "Go 示例对一个完整虚构 .env 值运行，并比较跨工作树与同工作树匹配。"
+    },
+    "steps": [
+      {
+        "title": {
+          "en": "Install from source",
+          "zh": "从源码安装"
+        },
+        "code": "git clone https://github.com/SuperMarioYL/leakmap.git\ncd leakmap\ngo build ./cmd/leakmap"
+      },
+      {
+        "title": {
+          "en": "Run the included example",
+          "zh": "运行随仓示例"
+        },
+        "code": "go run ./examples/presentation"
+      }
+    ]
+  },
+  "limitations": [
+    {
+      "en": "A content match is not proof of which process copied it, which agent caused it or whether it was committed. PID attribution is best-effort and can be unknown.",
+      "zh": "内容匹配不能证明哪个进程复制、哪个 Agent 导致或是否已提交。PID 归因只是尽力识别，可能未知。"
+    },
+    {
+      "en": "The index and recursive watch are established at startup; newly created subdirectories and later secret changes may not be covered. This is detection, not an isolation or blocking boundary.",
+      "zh": "索引与递归监听在启动时建立；新建子目录与后续密钥变化可能不在覆盖范围内。这是检测工具，不是隔离或阻断边界。"
+    },
+    {
+      "en": "The demo exercises scanning and matching only. It uses a fake token; no actual user secret, live watcher, network-egress or environment-read interception is tested.",
+      "zh": "示例只验证扫描与匹配，使用假 token；未读取用户密钥，也未验证实时监听、网络出口或环境读取截获。"
+    }
+  ],
+  "scene": {
+    "kind": "neon-graph",
+    "fallback": "/assets/presentation/scene-dark.svg",
+    "fallbackLight": "/assets/presentation/scene-light.svg"
+  },
+  "story": {
+    "intro": {
+      "title": {
+        "en": "A concrete task",
+        "zh": "从实际任务出发"
+      },
+      "body": {
+        "en": "Parallel worktrees share a host filesystem. A source-to-target content match gives you a concrete file pair to inspect when material unexpectedly appears in another workspace.",
+        "zh": "并行工作树共享主机文件系统。内容从源到目标的匹配，可以在资料意外出现在另一工作区时提供明确的文件对供调查。"
+      }
+    },
+    "sections": [
+      {
+        "title": {
+          "en": "Follow the operation",
+          "zh": "处理过程"
+        },
+        "body": {
+          "en": "worktree discovery enumerates roots, secret scans file patterns and builds an in-memory raw-value index, and fsnotify events feed file contents to the exact/fuzzy matcher. Events retain source and target paths without serializing raw values; renderers read JSONL into local reports.",
+          "zh": "worktree discovery 枚举根目录，secret 按文件规则扫描并建立内存原值索引；fsnotify 事件将文件内容交给精确/模糊匹配器。事件保留源与目标路径，但不序列化原值；渲染器从 JSONL 生成本地报告。"
+        },
+        "image": {
+          "light": "/assets/presentation/process-light.svg",
+          "dark": "/assets/presentation/process-dark.svg",
+          "alt": {
+            "en": "Follow the operation",
+            "zh": "处理过程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Inside LeakMap",
+          "zh": "LeakMap 的内部流程"
+        },
+        "body": {
+          "en": "worktree discovery enumerates roots, secret scans file patterns and builds an in-memory raw-value index, and fsnotify events feed file contents to the exact/fuzzy matcher. Events retain source and target paths without serializing raw values; renderers read JSONL into local reports.",
+          "zh": "worktree discovery 枚举根目录，secret 按文件规则扫描并建立内存原值索引；fsnotify 事件将文件内容交给精确/模糊匹配器。事件保留源与目标路径，但不序列化原值；渲染器从 JSONL 生成本地报告。"
+        },
+        "image": {
+          "light": "/assets/presentation/architecture-light.svg",
+          "dark": "/assets/presentation/architecture-dark.svg",
+          "alt": {
+            "en": "Inside LeakMap",
+            "zh": "LeakMap 的内部流程"
+          }
+        }
+      },
+      {
+        "title": {
+          "en": "Connect the pieces",
+          "zh": "输入与输出"
+        },
+        "body": {
+          "en": "Choose the input and output route that matches your workflow. The local example below exercises the stated subset.",
+          "zh": "根据工作流选择输入与输出路径。本文本地示例验证其中明确说明的子流程。"
+        },
+        "image": {
+          "light": "/assets/presentation/integrations-light.svg",
+          "dark": "/assets/presentation/integrations-dark.svg",
+          "alt": {
+            "en": "Connect the pieces",
+            "zh": "输入与输出"
+          }
+        }
+      }
+    ],
+    "details": [
+      {
+        "title": {
+          "en": "Configuration",
+          "zh": "配置"
+        },
+        "body": {
+          "en": "--repo chooses the Git repository, --jsonl the event file, and --verbose diagnostic output. Scan patterns include .env variants, key/PEM and credential files, while build and dependency directories are pruned. Values shorter than eight bytes are not cross-matched. Human scan output masks values; event reports still contain potentially sensitive file paths.",
+          "zh": "--repo 指定 Git 仓库，--jsonl 指定事件文件，--verbose 开启诊断。扫描覆盖 .env 变体、key/PEM 与 credential 文件，跳过构建和依赖目录。少于八字节的值不做跨树匹配；人类可读扫描输出会掩码原值，事件报告仍包含可能敏感的路径。"
+        }
+      },
+      {
+        "title": {
+          "en": "Further use",
+          "zh": "进一步使用"
+        },
+        "body": {
+          "en": "Run these commands from the repository root after installation. Replace paths for your own data.",
+          "zh": "安装后在仓库根目录运行以下命令；处理自己的数据时替换相应路径。"
+        },
+        "code": "go run ./cmd/leakmap scan --repo . --json\ngo run ./cmd/leakmap watch --repo . --jsonl leakmap.jsonl\ngo run ./cmd/leakmap map --repo . --html leakmap.html\ngo run ./cmd/leakmap report --repo . -m REPORT.md"
+      }
+    ]
+  }
 }

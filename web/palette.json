@@ -1,0 +1,38 @@
+{
+  "mode": "auto",
+  "id": "a056e6-e76ae0-b7acf6-7a2359319ac8",
+  "identity": "https://github.com/supermarioyl/leakmap",
+  "primary": "#a056e6",
+  "secondary": "#e76ae0",
+  "highlight": "#b7acf6",
+  "dark": {
+    "bg": "#080712",
+    "panel": "#10101f",
+    "code": "#0f0d1d",
+    "ink": "#f1eefd",
+    "muted": "#a49cc4",
+    "line": "#291841",
+    "primary": "#a158e6",
+    "secondary": "#e76ae0",
+    "highlight": "#b7acf6",
+    "accent": "#a158e6",
+    "buttonStart": "#9a53de",
+    "buttonEnd": "#b251ac",
+    "buttonText": "#ffffff"
+  },
+  "light": {
+    "bg": "#fcf9fe",
+    "panel": "#faf7fe",
+    "code": "#f8f3fd",
+    "ink": "#1d1630",
+    "muted": "#645e88",
+    "line": "#e2cbf7",
+    "primary": "#924fd2",
+    "secondary": "#a84da3",
+    "highlight": "#716b99",
+    "accent": "#924fd2",
+    "buttonStart": "#9a53de",
+    "buttonEnd": "#b251ac",
+    "buttonText": "#ffffff"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "name": "LeakMap",
+  "tagline": "Spot secret values crossing worktree boundaries.",
+  "architecture": {
+    "title": "Inside LeakMap",
+    "nodes": [
+      {
+        "title": "Worktree discovery",
+        "detail": "internal/worktree"
+      },
+      {
+        "title": "Secret index",
+        "detail": "internal/secret"
+      },
+      {
+        "title": "Write matcher",
+        "detail": "internal/leak/detect.go"
+      },
+      {
+        "title": "JSONL events",
+        "detail": "internal/leak/event.go"
+      },
+      {
+        "title": "Local reports",
+        "detail": "internal/render"
+      }
+    ],
+    "edges": [
+      [
+        0,
+        1
+      ],
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "process": {
+    "title": "From input to a useful result",
+    "steps": [
+      {
+        "title": "Fingerprint value",
+        "detail": "Temporary fake .env"
+      },
+      {
+        "title": "Match destination",
+        "detail": "Production exact matcher"
+      },
+      {
+        "title": "Compare same root",
+        "detail": "No cross-boundary event"
+      }
+    ],
+    "result": "One DB_TOKEN exact match crosses worktree-a to worktree-b; the same-worktree check yields zero events."
+  },
+  "integrations": {
+    "title": "Supported input and output routes",
+    "items": [
+      {
+        "title": "Git worktrees",
+        "detail": "Source and target roots"
+      },
+      {
+        "title": ".env / key files",
+        "detail": "Pattern-based fingerprinting"
+      },
+      {
+        "title": "fsnotify",
+        "detail": "Watched file writes"
+      },
+      {
+        "title": "JSONL",
+        "detail": "Path and match evidence"
+      },
+      {
+        "title": "TUI / HTML / Markdown",
+        "detail": "Local inspection exports"
+      }
+    ]
+  }
+}
