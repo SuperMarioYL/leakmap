@@ -10,6 +10,7 @@ package leak
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,18 @@ import (
 // minMatchLen is the shortest value length worth matching as a substring.
 // Very short values (e.g. "true", a 4-char flag) produce false positives.
 const minMatchLen = 8
+
+// maxReadBytes caps how much of a written file is fed to matching. A write
+// larger than this (a huge generated artifact) is matched on its first
+// maxReadBytes only, keeping the watcher's memory bounded.
+const maxReadBytes = 10 << 20 // 10 MiB
+
+// fuzzyScanCap bounds the content size the sliding-window fuzzy matcher will
+// scan. Its cost is O(content x value) per fingerprint, so an uncapped large
+// write stalls the watch loop (measured: one 512 KiB write burned ~600ms of
+// CPU against a single fingerprint at v0.1.0). Above the cap only exact
+// substring matching runs — still over the whole (read-capped) content.
+const fuzzyScanCap = 128 << 10 // 128 KiB
 
 // Detector holds the watch roots, the secret index, and dispatches events.
 type Detector struct {
@@ -102,6 +115,11 @@ func Match(content string, targetWt, targetPath string, targetPID int, idx *secr
 func fuzzyContains(content, value string) bool {
 	vlen := len(value)
 	if vlen < minMatchLen {
+		return false
+	}
+	if len(content) > fuzzyScanCap {
+		// Too large for the quadratic sliding-window scan; exact matching in
+		// Match still covers the full (read-capped) content.
 		return false
 	}
 	// Slide a window of len(value) across content; cheap Jaccard on byte
@@ -227,7 +245,7 @@ func (d *Detector) handle(path string, onErr func(error)) {
 	if err != nil || info.IsDir() {
 		return
 	}
-	data, err := os.ReadFile(path)
+	data, err := readCapped(path)
 	if err != nil {
 		if onErr != nil {
 			onErr(err)
@@ -242,8 +260,21 @@ func (d *Detector) handle(path string, onErr func(error)) {
 	targetPID := d.pidByWt[targetWt]
 	events := Match(content, targetWt, path, targetPID, d.index)
 	for _, e := range events {
+		// Complete the attribution: the source worktree's agent PID is known
+		// to the detector even though Match itself stays pure.
+		e.SourceAgentPID = d.pidByWt[e.SourceWorktree]
 		d.emit(e)
 	}
+}
+
+// readCapped reads at most maxReadBytes of path for matching.
+func readCapped(path string) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return io.ReadAll(io.LimitReader(f, maxReadBytes))
 }
 
 // worktreeForPath returns the most specific watched root containing path.

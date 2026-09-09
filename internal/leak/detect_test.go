@@ -1,6 +1,9 @@
 package leak
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/SuperMarioYL/leakmap/internal/secret"
@@ -110,5 +113,88 @@ func TestMatchMultipleFingerprints(t *testing.T) {
 		if e.SourceWorktree != "wt-a" {
 			t.Errorf("source %q want wt-a", e.SourceWorktree)
 		}
+	}
+}
+
+func TestDetectorHandleFillsSourceAgentPID(t *testing.T) {
+	// The detector knows both worktrees' agent PIDs; the emitted event must
+	// attribute the leak to the source agent, not just the target.
+	root := t.TempDir() // stands in for the watched "wt-b" root
+	idx := idxFrom([]secret.Fingerprint{
+		fp("wt-a", "DB_TOKEN", "super-secret-token-1234567890"),
+	})
+	var got []Event
+	d := &Detector{
+		index:    idx,
+		pidByWt:  map[string]int{"wt-a": 4242, root: 2718},
+		roots:    []string{root},
+		emit:     func(e Event) { got = append(got, e) },
+		minDelay: 0,
+	}
+	target := filepath.Join(root, "notes.md")
+	if err := os.WriteFile(target, []byte("TOKEN=super-secret-token-1234567890\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	d.handle(target, nil)
+	if len(got) != 1 {
+		t.Fatalf("want 1 event, got %d (%+v)", len(got), got)
+	}
+	if got[0].SourceAgentPID != 4242 {
+		t.Errorf("source agent pid %d, want 4242", got[0].SourceAgentPID)
+	}
+	if got[0].TargetAgentPID != 2718 {
+		t.Errorf("target agent pid %d, want 2718", got[0].TargetAgentPID)
+	}
+}
+
+func TestMatchExactSurvivesFuzzyCap(t *testing.T) {
+	// A verbatim secret at the very end of content larger than fuzzyScanCap
+	// must still fire: exact matching covers the whole read-capped content.
+	idx := idxFrom([]secret.Fingerprint{
+		fp("wt-a", "DB_TOKEN", "super-secret-token-1234567890"),
+	})
+	content := strings.Repeat("x", fuzzyScanCap+4096) + "TOKEN=super-secret-token-1234567890"
+	got := Match(content, "wt-b", "/r/wt-b/bundle.js", 0, idx)
+	if len(got) != 1 || got[0].MatchKind != MatchExact {
+		t.Fatalf("want 1 exact event above fuzzyScanCap, got %d (%+v)", len(got), got)
+	}
+}
+
+func TestMatchFuzzySkippedAboveCap(t *testing.T) {
+	// Documented cap behavior: only a near-duplicate (non-verbatim) mutation
+	// inside content larger than fuzzyScanCap produces no fuzzy event — the
+	// quadratic sliding-window scan is skipped to keep the watch loop alive.
+	value := "ghp_abcdefghijklmnopqrstuvwxyz0123456789AB"
+	idx := idxFrom([]secret.Fingerprint{
+		fp("wt-a", "GH_TOKEN", value),
+	})
+	mutated := value[:len(value)-1] + "C"
+	content := strings.Repeat("pad ", 40*1024) + "token := " + mutated + "\n"
+	if len(content) <= fuzzyScanCap {
+		t.Fatalf("test content must exceed fuzzyScanCap (%d bytes)", len(content))
+	}
+	got := Match(content, "wt-b", "/r/wt-b/y", 0, idx)
+	if len(got) != 0 {
+		t.Fatalf("fuzzy scan must be skipped above fuzzyScanCap, got %d (%+v)", len(got), got)
+	}
+}
+
+func TestReadCapped(t *testing.T) {
+	// Files larger than maxReadBytes are read up to the cap only.
+	path := filepath.Join(t.TempDir(), "big.bin")
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(make([]byte, maxReadBytes+1024)); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	data, err := readCapped(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(data) != maxReadBytes {
+		t.Fatalf("read %d bytes, want capped at %d", len(data), maxReadBytes)
 	}
 }

@@ -92,7 +92,7 @@ go run ./cmd/leakmap report --repo . -m REPORT.md
 
 ## 配置
 
---repo 指定 Git 仓库，--jsonl 指定事件文件，--verbose 开启诊断。扫描覆盖 .env 变体、key/PEM 与 credential 文件，跳过构建和依赖目录。少于八字节的值不做跨树匹配；人类可读扫描输出会掩码原值，事件报告仍包含可能敏感的路径。
+--repo 指定 Git 仓库，--jsonl 指定事件文件，--verbose 开启诊断，watch 的 --tui 在会话结束（Ctrl-C）后直接渲染本次累积的 leak-map TUI。扫描覆盖 .env 变体、key/PEM 与 credential 文件，跳过构建和依赖目录。少于八字节的值不做跨树匹配；人类可读扫描输出会掩码原值，事件报告仍包含可能敏感的路径。
 
 ## 集成与职责分工
 

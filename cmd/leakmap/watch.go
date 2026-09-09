@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/SuperMarioYL/leakmap/internal/leak"
 	"github.com/SuperMarioYL/leakmap/internal/proc"
+	"github.com/SuperMarioYL/leakmap/internal/render"
 	"github.com/SuperMarioYL/leakmap/internal/secret"
 	"github.com/SuperMarioYL/leakmap/internal/worktree"
 )
@@ -27,7 +28,8 @@ root. The moment a write to worktree Y contains a value fingerprinted in a
 printed to the terminal. The raw secret value is never persisted — only field
 names, paths, and hashes.
 
-Ctrl-C stops the watch. See "leakmap map" to render the accumulated leaks.`,
+Ctrl-C stops the watch. With --tui the leak-map TUI renders inline from this
+session's events; otherwise see "leakmap map" to render the accumulated leaks.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			repo := globalFlags.repo
 			abs, err := filepath.Abs(repo)
@@ -98,7 +100,24 @@ Ctrl-C stops the watch. See "leakmap map" to render the accumulated leaks.`,
 				}
 			}
 			fmt.Fprintln(os.Stderr, "leakmap: watching — Ctrl-C to stop")
-			return det.Watch(roots, ctx.Done(), onErr)
+			if err := det.Watch(roots, ctx.Done(), onErr); err != nil {
+				return err
+			}
+			if !showTUI {
+				return nil
+			}
+			// --tui: render the leak-map accumulated during this watch session
+			// inline, without a separate `leakmap map` invocation.
+			events := store.Events()
+			if len(events) == 0 {
+				fmt.Fprintln(os.Stderr, "leakmap: no leaks recorded this session — nothing to map")
+				return nil
+			}
+			sessWts := make([]worktree.Worktree, 0, len(mappings))
+			for _, m := range mappings {
+				sessWts = append(sessWts, m.Worktree)
+			}
+			return render.RunTUI(sessWts, events)
 		},
 	}
 	cmd.Flags().BoolVar(&showTUI, "tui", false,

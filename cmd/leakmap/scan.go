@@ -34,10 +34,6 @@ raw secret values are never persisted — only their hashes and classifications.
 				return err
 			}
 			mappings := proc.MapWorktrees(wts)
-			pidByWt := map[string]int{}
-			for _, m := range mappings {
-				pidByWt[m.Worktree.Path] = m.AgentPID
-			}
 
 			var allPrints []secret.Fingerprint
 			for _, m := range mappings {

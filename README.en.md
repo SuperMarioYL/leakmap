@@ -92,7 +92,7 @@ go run ./cmd/leakmap report --repo . -m REPORT.md
 
 ## Configuration
 
---repo chooses the Git repository, --jsonl the event file, and --verbose diagnostic output. Scan patterns include .env variants, key/PEM and credential files, while build and dependency directories are pruned. Values shorter than eight bytes are not cross-matched. Human scan output masks values; event reports still contain potentially sensitive file paths.
+--repo chooses the Git repository, --jsonl the event file, and --verbose diagnostic output. The watch command's --tui renders the leak-map TUI accumulated during the session right after Ctrl-C. Scan patterns include .env variants, key/PEM and credential files, while build and dependency directories are pruned. Values shorter than eight bytes are not cross-matched. Human scan output masks values; event reports still contain potentially sensitive file paths.
 
 ## Integrations and responsibilities
 
