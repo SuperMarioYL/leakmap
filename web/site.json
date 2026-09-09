@@ -10,7 +10,8 @@
   },
   "meta": {
     "visual_style": "neon-particle",
-    "demo_source": "docs/demo-results.json"
+    "demo_source": "docs/demo-results.json",
+    "content_version": "v0.2.0"
   },
   "hero": {
     "headline": {
