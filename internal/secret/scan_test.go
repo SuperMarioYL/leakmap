@@ -3,6 +3,7 @@ package secret
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -154,5 +155,64 @@ func TestIndexForSource(t *testing.T) {
 		if p.Worktree != "wt-a" {
 			t.Errorf("ForSource leaked same-wt entry: %+v", p)
 		}
+	}
+}
+
+func TestScanWorktreeCapsBlobRead(t *testing.T) {
+	// A blob file larger than maxScanBytes is fingerprinted on its first
+	// maxScanBytes bytes only — the documented scan-path read cap mirroring
+	// the watch-path maxReadBytes.
+	dir := t.TempDir()
+	big := filepath.Join(dir, "big.key")
+	content := make([]byte, maxScanBytes+1024)
+	for i := range content[:maxScanBytes] {
+		content[i] = byte('a' + i%26)
+	}
+	if err := os.WriteFile(big, content, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	prints, err := ScanWorktree(dir, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(prints) != 1 {
+		t.Fatalf("want 1 blob fingerprint, got %d (%+v)", len(prints), prints)
+	}
+	want := HashValue(string(content[:maxScanBytes]))
+	if prints[0].ValueHash != want {
+		t.Fatalf("blob hash = %s, want hash of the first %d bytes", prints[0].ValueHash, maxScanBytes)
+	}
+}
+
+func TestScanWorktreeEnvReadsCappedContent(t *testing.T) {
+	// A .env larger than maxScanBytes still yields the KEY=VALUE fingerprints
+	// that live within the capped read; entries beyond the cap are not
+	// fingerprinted (the documented truncation point).
+	dir := t.TempDir()
+	env := filepath.Join(dir, ".env")
+	var b strings.Builder
+	b.WriteString("# padding so the tail lands beyond maxScanBytes\n")
+	for b.Len() < maxScanBytes-256 {
+		b.WriteString("# filler line to grow the file past the read cap\n")
+	}
+	b.WriteString("REAL_TOKEN=super-secret-token-1234567890\n")
+	b.WriteString(strings.Repeat("# beyond-cap filler\n", 64))
+	b.WriteString("LOST_TOKEN=another-secret-token-0987654321\n")
+	if err := os.WriteFile(env, []byte(b.String()), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	prints, err := ScanWorktree(dir, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields := map[string]bool{}
+	for _, p := range prints {
+		fields[p.Field] = true
+	}
+	if !fields["REAL_TOKEN"] {
+		t.Fatal("REAL_TOKEN within the capped read must be fingerprinted")
+	}
+	if fields["LOST_TOKEN"] {
+		t.Fatal("LOST_TOKEN beyond the read cap must not be fingerprinted")
 	}
 }

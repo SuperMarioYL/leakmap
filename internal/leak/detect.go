@@ -221,10 +221,22 @@ func (d *Detector) Watch(roots []string, done <-chan struct{}, onErr func(error)
 			if !ok {
 				return nil
 			}
-			if !ev.Has(fsnotify.Write) && !ev.Has(fsnotify.Create) {
-				continue
+		if !ev.Has(fsnotify.Write) && !ev.Has(fsnotify.Create) {
+			continue
+		}
+		// A directory created after startup is not yet watched (fsnotify only
+		// reports events for paths under an existing watch), so add it — and
+		// its subtree — to the watch set. Writes that land between the mkdir
+		// and this Add are the one inherent gap; everything after is covered,
+		// which is what a leak watcher owes the 写入即匹配 promise.
+		if ev.Has(fsnotify.Create) {
+			if info, serr := os.Stat(ev.Name); serr == nil && info.IsDir() {
+				if err := addWatchRecursive(w, ev.Name); err != nil && onErr != nil {
+					onErr(err)
+				}
 			}
-			d.handle(ev.Name, onErr)
+		}
+		d.handle(ev.Name, onErr)
 		case err, ok := <-w.Errors:
 			if !ok {
 				return nil

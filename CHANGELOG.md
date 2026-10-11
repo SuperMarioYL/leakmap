@@ -4,6 +4,35 @@ All notable changes to LeakMap are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions match the
 repo-root VERSION file and the `v<version>` release tags.
 
+## [0.3.0] — 2026-10-12
+
+Repair release: fix the binary-distribution pipeline and close two watch/scan
+coverage gaps; no new scope.
+
+### Fixed
+
+- The release pipeline was broken: goreleaser rejected the invalid
+  `changelog.use: gitlog` value, so the release job failed at the v0.2.0 tag
+  and the published v0.2.0 GitHub release carried zero binary assets. The
+  config now uses the documented `git` changelog source and the renamed
+  `snapshot.version_template` / `archives.formats` keys, clearing both
+  deprecation warnings from the same run.
+- Directories created after `leakmap watch` starts were invisible to the
+  detector: the fsnotify watch set was built once at startup and a
+  mkdir-then-write — the most common coding-agent write pattern — produced
+  no leak events. Freshly created subdirectories now join the watch set
+  (with the same ignored-dir pruning), so writes inside them are attributed
+  like any other write.
+- `secret.ScanWorktree` read every candidate file unbounded into memory —
+  the scan-path sibling of the watch-path defect capped in 0.2.0. Per-file
+  reads are now capped at 10 MiB; blob fingerprints of over-cap files hash
+  the first capped bytes, and values under the cap are unchanged.
+
+### Changed
+
+- Version surfaces bumped to 0.3.0 in lockstep (VERSION file, CLI
+  `--version`) with the existing drift-guard test.
+
 ## [0.2.0] — 2026-09-09
 
 Correctness and attribution release; no new scope.

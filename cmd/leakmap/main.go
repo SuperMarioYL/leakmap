@@ -2,10 +2,10 @@
 // file bleeds between parallel coding agents running in git worktrees of one
 // repository, and renders them as a leak-map.
 //
-// v0.2 implements: scan (fingerprint each worktree's secret surface),
+// v0.3 implements: scan (fingerprint each worktree's secret surface),
 // watch (fsnotify cross-worktree writes -> LeakEvent JSONL, optional inline
 // leak-map TUI), map (leak-map TUI), report (markdown/html summary). Network
-// and env-var eBPF detection is out of scope for v0.2.
+// and env-var eBPF detection is out of scope for v0.3.
 package main
 
 import (
@@ -18,7 +18,7 @@ import (
 // version is the single source of truth for the CLI version banner. The
 // release tag (v<version>) is driven by the repo-root VERSION file, which
 // main_test.go asserts stays in lockstep with this constant.
-const version = "0.2.0"
+const version = "0.3.0"
 
 // globalFlags shared across subcommands.
 var globalFlags struct {
@@ -43,7 +43,7 @@ Quick start:
   leakmap watch                 # watch cross-worktree writes -> leakmap.jsonl
   leakmap map                   # render the accumulated leak-map TUI
 
-v0.2 covers file/content leak attribution. Network egress and env-var
+v0.3 covers file/content leak attribution. Network egress and env-var
 interception (eBPF) are deferred to a later release.`,
 		Version: version,
 	}

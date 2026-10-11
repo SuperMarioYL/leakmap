@@ -13,10 +13,20 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
 )
+
+// maxScanBytes caps how much of any single candidate file is read during
+// fingerprinting. ScanWorktree walks every worktree for .env variants and
+// key/credential blobs, so an unbounded read here (the scan-path sibling of
+// the watch-path defect fixed by leak.maxReadBytes) would load a multi-GiB
+// glob-matching file fully into memory on every scan and watch startup. Blob
+// fingerprints of over-cap files hash the first maxScanBytes bytes; values
+// under the cap are byte-for-byte unchanged.
+const maxScanBytes = 10 << 20 // 10 MiB
 
 // Fingerprint is one fingerprinted secret surface entry. Value is the raw
 // secret material kept in-memory only for matching; ValueHash is its
@@ -126,7 +136,12 @@ func shouldScan(name string) bool {
 // files, each KEY=VALUE line is a fingerprint (field=KEY). For blob files
 // (keys, credentials), the whole content is one fingerprint (field=filename).
 func fingerprintFile(wtLabel, path string) ([]Fingerprint, error) {
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, maxScanBytes))
 	if err != nil {
 		return nil, err
 	}

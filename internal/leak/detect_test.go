@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/SuperMarioYL/leakmap/internal/secret"
 )
@@ -196,5 +197,61 @@ func TestReadCapped(t *testing.T) {
 	}
 	if len(data) != maxReadBytes {
 		t.Fatalf("read %d bytes, want capped at %d", len(data), maxReadBytes)
+	}
+}
+
+func TestWatchPicksUpNewSubdirectory(t *testing.T) {
+	// A directory created after Watch starts must join the watch set: an
+	// agent that mkdirs a fresh subdirectory and then writes into it is the
+	// common write pattern, and it must fire the same attribution as a write
+	// into a startup-time directory.
+	if testing.Short() {
+		t.Skip("real fsnotify watcher")
+	}
+	root := t.TempDir()
+	idx := idxFrom([]secret.Fingerprint{
+		fp("wt-a", "DB_TOKEN", "super-secret-token-1234567890"),
+	})
+	events := make(chan Event, 16)
+	d := NewDetector(idx, map[string]int{"wt-a": 4242, root: 2718}, func(e Event) { events <- e })
+	d.minDelay = 0
+
+	done := make(chan struct{})
+	watchErr := make(chan error, 1)
+	go func() { watchErr <- d.Watch([]string{root}, done, nil) }()
+	t.Cleanup(func() {
+		close(done)
+		if err := <-watchErr; err != nil {
+			t.Errorf("watch returned error: %v", err)
+		}
+	})
+
+	sub := filepath.Join(root, "newpkg")
+	if err := os.MkdirAll(sub, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// The new directory joins the watch set shortly after its Create event
+	// lands; retry the write until an event fires or the deadline expires so
+	// the test does not depend on scheduler timing.
+	deadline := time.Now().Add(5 * time.Second)
+	target := filepath.Join(sub, "config.env")
+	for {
+		f, err := os.OpenFile(target, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, _ = f.WriteString("DB_TOKEN=super-secret-token-1234567890\n")
+		f.Close()
+		select {
+		case e := <-events:
+			if e.MatchKind != MatchExact || e.SourceWorktree != "wt-a" || e.TargetWorktree != root {
+				t.Fatalf("wrong event: %+v", e)
+			}
+			return
+		case <-time.After(200 * time.Millisecond):
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("no leak event for a write into a subdirectory created after Watch started")
+		}
 	}
 }
