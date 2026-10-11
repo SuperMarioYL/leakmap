@@ -11,7 +11,7 @@
   "meta": {
     "visual_style": "neon-particle",
     "demo_source": "docs/demo-results.json",
-    "content_version": "v0.2.0"
+    "content_version": "v0.3.0"
   },
   "hero": {
     "headline": {
@@ -109,8 +109,8 @@
       "zh": "内容匹配不能证明哪个进程复制、哪个 Agent 导致或是否已提交。PID 归因只是尽力识别，可能未知。"
     },
     {
-      "en": "The index and recursive watch are established at startup; newly created subdirectories and later secret changes may not be covered. This is detection, not an isolation or blocking boundary.",
-      "zh": "索引与递归监听在启动时建立；新建子目录与后续密钥变化可能不在覆盖范围内。这是检测工具，不是隔离或阻断边界。"
+      "en": "The fingerprint index is established at startup; later changes to secret files are not re-fingerprinted. Subdirectories created while watching are covered as they appear (since v0.3.0). This is detection, not an isolation or blocking boundary.",
+      "zh": "指纹索引在启动时建立；后续密钥文件变化不会重新指纹化。监听期间新建的子目录会随创建纳入监听（v0.3.0 起）。这是检测工具，不是隔离或阻断边界。"
     },
     {
       "en": "The demo exercises scanning and matching only. It uses a fake token; no actual user secret, live watcher, network-egress or environment-read interception is tested.",
